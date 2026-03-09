@@ -1,18 +1,16 @@
 import pygame
-from random import randint
+from random import randint, choice
 
 pygame.init()
 
 WIDTH = 500
 HEIGHT = 500
-SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Handling Events")
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Using Groups")
 
-CLOCK = pygame.time.Clock()
+clock = pygame.time.Clock()
 
-LANES = [93, 218, 343]
-
-ROWS = [93, 218, 343]
+lanes = [93, 218, 343]
 
 
 class GameObject(pygame.sprite.Sprite):
@@ -25,13 +23,8 @@ class GameObject(pygame.sprite.Sprite):
     def render(self, screen):
         screen.blit(self.surf, (self.x, self.y))
 
-    @property
-    def width(self):
-        return self.surf.get_width()
-
-    @property
-    def height(self):
-        return self.surf.get_height()
+    def move(self):
+        pass
 
 
 class Apple(GameObject):
@@ -49,7 +42,7 @@ class Apple(GameObject):
             self.reset()
 
     def reset(self):
-        self.x = LANES[randint(0, 2)]
+        self.x = choice(lanes)
         self.y = -64
 
 
@@ -69,64 +62,61 @@ class Strawberry(GameObject):
 
     def reset(self):
         self.x = -64
-        self.y = ROWS[randint(0, 2)]
+        self.y = choice(lanes)
 
 
 class Player(GameObject):
     def __init__(self):
         super().__init__(0, 0, "player.png")
-        self.col = 1  # middle lane
-        self.row = 1  # middle row
         self.dx = 0
         self.dy = 0
+        self.pos_x = 1
+        self.pos_y = 1
         self.reset()
 
+    def update_dx_dy(self):
+        self.dx = lanes[self.pos_x]
+        self.dy = lanes[self.pos_y]
+
     def left(self):
-        if self.col > 0:
-            self.col -= 1
-            self.dx = LANES[self.col]
+        if self.pos_x > 0:
+            self.pos_x -= 1
+            self.update_dx_dy()
 
     def right(self):
-        if self.col < 2:
-            self.col += 1
-            self.dx = LANES[self.col]
+        if self.pos_x < len(lanes) - 1:
+            self.pos_x += 1
+            self.update_dx_dy()
 
     def up(self):
-        if self.row > 0:
-            self.row -= 1
-            self.dy = ROWS[self.row]
+        if self.pos_y > 0:
+            self.pos_y -= 1
+            self.update_dx_dy()
 
     def down(self):
-        if self.row < 2:
-            self.row += 1
-            self.dy = ROWS[self.row]
+        if self.pos_y < len(lanes) - 1:
+            self.pos_y += 1
+            self.update_dx_dy()
 
     def move(self):
-        # easing movement toward target
         self.x -= (self.x - self.dx) * 0.25
         self.y -= (self.y - self.dy) * 0.25
 
-        # extra protection so player never goes off screen
-        max_x = WIDTH - self.width
-        max_y = HEIGHT - self.height
-
-        self.x = max(0, min(self.x, max_x))
-        self.y = max(0, min(self.y, max_y))
-        self.dx = max(0, min(self.dx, max_x))
-        self.dy = max(0, min(self.dy, max_y))
-
     def reset(self):
-        self.col = 1
-        self.row = 1
-        self.x = LANES[self.col]
-        self.y = ROWS[self.row]
+        self.x = lanes[self.pos_x]
+        self.y = lanes[self.pos_y]
         self.dx = self.x
         self.dy = self.y
 
 
-apples = [Apple(), Apple(), Apple()]
-strawberries = [Strawberry(), Strawberry()]
 player = Player()
+apple = Apple()
+strawberry = Strawberry()
+
+all_sprites = pygame.sprite.Group()
+all_sprites.add(player)
+all_sprites.add(apple)
+all_sprites.add(strawberry)
 
 running = True
 while running:
@@ -146,20 +136,13 @@ while running:
             elif event.key == pygame.K_DOWN:
                 player.down()
 
-    SCREEN.fill((0, 0, 0))
+    screen.fill((0, 0, 0))
 
-    for apple in apples:
-        apple.move()
-        apple.render(SCREEN)
-
-    for strawberry in strawberries:
-        strawberry.move()
-        strawberry.render(SCREEN)
-
-    player.move()
-    player.render(SCREEN)
+    for entity in all_sprites:
+        entity.move()
+        entity.render(screen)
 
     pygame.display.flip()
-    CLOCK.tick(60)
+    clock.tick(60)
 
 pygame.quit()
