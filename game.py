@@ -1,18 +1,24 @@
 import pygame
+from random import randint
 
 pygame.init()
 
-WIDTH, HEIGHT = 500, 500
+WIDTH = 500
+HEIGHT = 500
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Challenge 2 - Apples & Strawberries")
+pygame.display.set_caption("Fruit Game")
 
 clock = pygame.time.Clock()
 
 
+
 class GameObject(pygame.sprite.Sprite):
-    def __init__(self, x, y, image_path):
+
+    def __init__(self, x, y, image):
         super().__init__()
-        self.surf = pygame.image.load(image_path).convert_alpha()
+
+        self.surf = pygame.image.load(image).convert_alpha()
         self.x = x
         self.y = y
 
@@ -20,36 +26,85 @@ class GameObject(pygame.sprite.Sprite):
         screen.blit(self.surf, (self.x, self.y))
 
 
-# Grid layout from the screenshot: Apple, Strawberry, Apple / Strawberry, Apple, Strawberry / Apple, Strawberry, Apple
-layout = [
-    ["apple.png", "strawberry.png", "apple.png"],
-    ["strawberry.png", "apple.png", "strawberry.png"],
-    ["apple.png", "strawberry.png", "apple.png"],
-]
 
-# These values make a centered 3x3 grid for 64x64 sprites in a 500x500 window
-start_x, start_y = 93, 68      # top-left sprite position
-spacing_x, spacing_y = 125, 150 # distance between sprite top-left corners
+class Apple(GameObject):
 
-objects = []
-for row in range(3):
-    for col in range(3):
-        x = start_x + col * spacing_x
-        y = start_y + row * spacing_y
-        objects.append(GameObject(x, y, layout[row][col]))
+    def __init__(self):
+        super().__init__(0, 0, "apple.png")
+
+        self.dx = 0
+        self.dy = (randint(0, 200) / 100) + 1
+
+        self.reset()
+
+    def move(self):
+
+        self.x += self.dx
+        self.y += self.dy
+
+        if self.y > HEIGHT:
+            self.reset()
+
+    def reset(self):
+
+        lanes = [93, 218, 343]
+
+        self.x = lanes[randint(0, 2)]
+        self.y = -64
+
+
+
+class Strawberry(GameObject):
+
+    def __init__(self):
+        super().__init__(0, 0, "strawberry.png")
+
+        self.dx = (randint(0, 200) / 100) + 1
+        self.dy = 0
+
+        self.reset()
+
+    def move(self):
+
+        self.x += self.dx
+        self.y += self.dy
+
+        if self.x > WIDTH:
+            self.reset()
+
+    def reset(self):
+
+        self.x = -64
+        self.y = randint(50, 400)
+
+
+
+
+apples = [Apple(), Apple(), Apple()]
+strawberries = [Strawberry(), Strawberry()]
+
+
 
 running = True
+
 while running:
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
     screen.fill((0, 0, 0))
 
-    for obj in objects:
-        obj.render(screen)
+    for apple in apples:
+        apple.move()
+        apple.render(screen)
+
+    for strawberry in strawberries:
+        strawberry.move()
+        strawberry.render(screen)
 
     pygame.display.flip()
+
     clock.tick(60)
 
 pygame.quit()
